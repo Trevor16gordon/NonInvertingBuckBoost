@@ -1,0 +1,33 @@
+* C:\Users\Trevor\Documents\UBCO\Buck_boost\NonInvertingBuckBoost\LTSPICE\non-inverting-buck-boost-with-mosfets.asc
+V1 N006 0 PULSE(0 5 0 0 0 {Ton} {T}) AC 5
+L1 N001 N002 220µ IC=.02
+C1 N003 0 {C} IC= 5
+RLOAD N003 N005 {R}
+D1 N002 N003 D
+V2 N004 0 5
+D2 0 N001 D
+M1 N001 PWM-PMOS N004 N004 RRQ045P03
+M2 N002 PWM-NMOS 0 0 IRLML2803
+V3 N007 0 PULSE(5 0 0 0 0 {Ton} {T})
+D3 N005 0 D
+R1 PWM-PMOS N007 10
+R2 PWM-NMOS N006 40
+R3 N003 N008 5Meg
+R4 N008 0 1Meg
+.model D D
+.lib C:\Users\Trevor\Documents\LTspiceXVII\lib\cmp\standard.dio
+.model NMOS NMOS
+.model PMOS PMOS
+.lib C:\Users\Trevor\Documents\LTspiceXVII\lib\cmp\standard.mos
+.tran 0 5m
+*.AC 100k
+.model SW1 SW (Ron=1u, Roff=1000Meg, Vt=2.5)
+*.step param R 1k 5k 1k
+*.step param C 100n 1u 100n
+*.step param Ton 0.4u 1.4u .5u
+.parameter R=510
+.parameter C=220u
+.parameter Ton = 2u
+.parameter T = 3.33u
+.backanno
+.end
