@@ -1,16 +1,12 @@
 % Trevor Gordon
 % Observor and Servomechanism
-clear;
-clc;
+% clear;
+% clc;
 
 % Define the system
 buck_boost_sys_define;
 
-% Closed Loop Tracking System
-desP_track  = getPoles(.01, 10);
-Kt = place(A,B,desP_track);
-Gc = 1/(C*(B*Kt-A)^-1*B);
-trackSys = ss(A - B*Kt,B*Gc,C,D);
+
 
 % Stabilize Servo to desP ITAE
 desP_servo = getITAEPoles(.01, 10);
@@ -23,6 +19,13 @@ det([A B ; -C 0])
 %Sweep of poles and responses
 [servosys_mult, servosys_multi_K, desP_servo_multi] = getManySys(1, 5, 6, A, B, C, D);
 % [servosys_mult, servosys_multi_K] = getManySys(0.01, 0.1, 6, A, B, C, D);
+
+% Closed Loop Tracking System
+% desP_track  = getPoles(.01, 10);
+desP_track = desP_servo_multi(1,2:3);
+Kt = place(A,B,desP_track);
+Gc = 1/(C*(B*Kt-A)^-1*B);
+trackSys = ss(A - B*Kt,B*Gc,C,D);
 
 % Place at desP
 % Ksrv = place(Asrv,Bsrv,desP_servo);
@@ -84,7 +87,16 @@ olssv = Vin*(U+r(1))/(1-(U+r(1))); %open_loop_steady_state_value
 % grid on
 
 figure
-subplot(3,1,1)
+subplot (4,1,1)
+hold on
+plot(t,yo+X2, 'Color', [.9 .9 .9], 'linewidth',2)
+title('Open Loop Response')
+xlabel('Time(s)');
+ylabel('Voltage(V)')
+grid on
+hold off
+
+subplot(4,1,2)
 grid on
 % linespec = {'b.', 'r-', 'g--o'}; % define your ten linespecs in a cell array
 hold on
@@ -98,7 +110,7 @@ xlabel('Time(s)');
 ylabel('Voltage(V)')
 hold off
 
-subplot(3,1,2)
+subplot(4,1,3)
 grid on
 % linespec = {'b.', 'r-', 'g--o'}; % define your ten linespecs in a cell array
 hold on
@@ -110,20 +122,50 @@ xlabel('Real');
 ylabel('Imaginary')
 hold off
 
-subplot (3,1,3)
+subplot (4,1,4)
 hold on
-plot(t,yo+X2, 'Color', [.9 .9 .9], 'linewidth',2)
+plot(t,yc_track+X2, 'Color', [0.3010,0.7450,0.9330], 'linewidth',2)
 plot(t,yc_servo+X2,'Color', [ 0,0.4470, 0.7410],'linewidth',2)
-plot(t,yc_servo_observ+X2,'b--','linewidth',2)
-hold off
+title('Comparison of a Tracking and a ServoMechanism Control System')
+legend('Track', 'Servo')
+xlabel('Time(s)');
+ylabel('Voltage(V)')
 grid on
-xlabel('time (sec)')
-legend('Output Voltage Open Loop', 'Output Voltage with Disturbance Rejection', 'Output Voltage with Disturbance Rejection and OBbservor')
-title({'Control System for a Buckboost Convertor';'Comparison of Open Loop With Servo Compensator and Observer based Servo Compensator'})
+hold off
+
+% subplot (4,1,4)
+% hold on
+% plot(t,yc_servo+X2,'Color', [ 0,0.4470, 0.7410],'linewidth',2)
+% plot(t,yc_servo_observ+X2,'b--','linewidth',2)
+% hold off
+% grid on
+% xlabel('time (sec)')
+% legend('Output Voltage Open Loop', 'Output Voltage with Disturbance Rejection', 'Output Voltage with Disturbance Rejection and OBbservor')
+% title({'Control System for a Buckboost Convertor';'Comparison of Open Loop With Servo Compensator and Observer based Servo Compensator'})
+
+% To be run after the simulink saves ScopeData
+figure
+ax1 = subplot(4,1,[1,2,3]);
+hold on
+simulink_length = length(ScopeData.signals(1).values(:,2));
+dt2 = .001;
+time_array = 0:dt2:simulink_length*dt2-dt2;
+plot(time_array,ScopeData.signals(1).values(:,2), 'Color', [0.3010,0.7450,0.9330],'linewidth', 3)
+plot(time_array, ScopeData.signals(1).values(:,3), 'Color', [0,0.4470, 0.7410], 'linewidth', 3)
+plot(time_array, ScopeData.signals(1).values(:,1), '--','linewidth', 2)
+legend('Tracking', 'Servo', 'Desired Output')
+title('Comparison of a Tracking and Servo Control System and their ability to reject disturbances')
 
 
-
-
+ylabel('Voltage (V)')
+grid on
+hold off
+ax2 = subplot(4,1,4);
+plot(time_array, ScopeData.signals(2).values(:,1), '--', 'Color', [0.6350,0.0780,0.1840],'linewidth', 2)
+legend('0.1% Disturbance in u')
+xlabel('Time (s)')
+ylabel('Disturbance in U')
+linkaxes([ax1, ax2], 'x');
 
 function desP = getITAEPoles(ts, OS)
 
